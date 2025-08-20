@@ -25,7 +25,9 @@ use solana_sbpf::{
     vm::{Config, ContextObject},
 };
 use std::sync::Arc;
-use test_utils::{compare_trace_log, create_vm, test_interpreter_and_jit, TestContextObject};
+use test_utils::{
+    compare_instruction_trace, create_vm, test_interpreter_and_jit, TestContextObject,
+};
 
 // BPF_ALU32_LOAD : Arithmetic and Logic
 #[test]
