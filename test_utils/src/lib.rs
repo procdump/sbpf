@@ -352,13 +352,13 @@ macro_rules! test_interpreter_and_jit {
                         let analysis = Analysis::from_executable(&$executable).unwrap();
                         let stdout = std::io::stdout();
                         analysis
-                            .disassemble_trace_log(
+                            .disassemble_instruction_trace(
                                 &mut stdout.lock(),
                                 &_trace_interpreter,
                             )
                             .unwrap();
                         analysis
-                            .disassemble_trace_log(&mut stdout.lock(), trace_jit)
+                            .disassemble_instruction_trace(&mut stdout.lock(), trace_jit)
                             .unwrap();
                         diverged = true;
                     }

@@ -218,7 +218,7 @@ fn main() {
         analysis
             .as_ref()
             .unwrap()
-            .disassemble_trace_log(&mut stdout.lock(), &vm.instruction_trace)
+            .disassemble_instruction_trace(&mut stdout.lock(), &vm.instruction_trace)
             .unwrap();
     }
     if matches.is_present("profile") {
