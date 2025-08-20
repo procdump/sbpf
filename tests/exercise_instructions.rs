@@ -435,10 +435,7 @@ fn test_ins(v0: bool, ins: String, prng: &mut SmallRng, cu: Option<u64>) {
         exit"
     );
 
-    let mut config = Config {
-        enable_instruction_tracing: true,
-        ..Config::default()
-    };
+    let mut config = Config::default();
     if v0 {
         config.enabled_sbpf_versions = SBPFVersion::V0..=SBPFVersion::V0;
     }

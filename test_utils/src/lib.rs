@@ -413,8 +413,7 @@ macro_rules! test_interpreter_and_jit_asm {
     ($source:expr, $config:expr, $mem:expr, $context_object:expr, $expected_result:expr $(,)?) => {
         #[allow(unused_mut)]
         {
-            let mut config = $config;
-            config.enable_instruction_tracing = true;
+            let config = $config;
             let loader = Arc::new(BuiltinProgram::new_loader(config));
             let mut executable = assemble($source, loader).unwrap();
             test_interpreter_and_jit!(executable, $mem, $context_object, $expected_result);
@@ -440,10 +439,7 @@ macro_rules! test_syscall_asm {
         let _ = $loader.register_function($syscall_name, $syscall_function).unwrap();
     };
     ($source:expr, $mem:expr, ($($syscall_name:expr => $syscall_function:expr),*$(,)?), $context_object:expr, $expected_result:expr $(,)?) => {
-        let mut config = Config {
-            enable_instruction_tracing: true,
-            ..Config::default()
-        };
+        let mut config = Config::default();
         for sbpf_version in [SBPFVersion::V0, SBPFVersion::V3] {
             config.enabled_sbpf_versions = sbpf_version..=sbpf_version;
             let mut loader = BuiltinProgram::new_loader(config.clone());
@@ -472,10 +468,7 @@ macro_rules! test_interpreter_and_jit_elf {
         }
     };
     ($source:expr, $mem:expr, ($($syscall_name:expr => $syscall_function:expr),* $(,)?), $context_object:expr, $expected_result:expr $(,)?) => {
-        let config = Config {
-            enable_instruction_tracing: true,
-            ..Config::default()
-        };
+        let config = Config::default();
         test_interpreter_and_jit_elf!($source, config, $mem, ($($syscall_name => $syscall_function),*), $context_object, $expected_result);
     };
 }

@@ -187,9 +187,8 @@ impl<'a, 'b, C: ContextObject> Interpreter<'a, 'b, C> {
         let dst = insn.dst as usize;
         let src = insn.src as usize;
 
-        if config.enable_instruction_tracing {
-            self.vm.context_object_pointer.trace(self.reg);
-        }
+        #[cfg(feature = "instruction-trace")]
+        self.vm.context_object_pointer.trace(self.reg);
 
         match insn.opc {
             ebpf::LD_DW_IMM if !self.executable.get_sbpf_version().disable_lddw() => {

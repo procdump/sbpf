@@ -3447,10 +3447,7 @@ fn execute_generated_program(prog: &[u8]) -> bool {
     let mem_size = 1024 * 1024;
     let executable = Executable::<TestContextObject>::from_text_bytes(
         prog,
-        Arc::new(BuiltinProgram::new_loader(Config {
-            enable_instruction_tracing: true,
-            ..Config::default()
-        })),
+        Arc::new(BuiltinProgram::new_loader(Config::default())),
         SBPFVersion::V4,
         FunctionRegistry::default(),
     );
@@ -3498,6 +3495,7 @@ fn execute_generated_program(prog: &[u8]) -> bool {
     );
     let (instruction_count_jit, result_jit) = vm.execute_program(&executable, false);
     let tracer_jit = &vm.context_object_pointer;
+    debug_assert!(!tracer_interpreter.trace_log.is_empty());
     if format!("{result_interpreter:?}") != format!("{result_jit:?}")
         || !TestContextObject::compare_trace_log(&tracer_interpreter, tracer_jit)
     {
