@@ -30,7 +30,7 @@ jobs:
     - name: Lint
       run: |
         cargo fmt --all -- --check
-        cargo clippy --all --tests -- --deny=warnings
+        cargo clippy --features="instruction-trace" --all --tests -- --deny=warnings
       if: matrix.rust == 'beta'
       shell: bash
     - name: Build and test
@@ -38,8 +38,7 @@ jobs:
         export RUSTFLAGS="-D warnings"
         cargo build --verbose
         cargo build --features="shuttle-test"
-        cargo test --verbose
-        cargo test --test exercise_instructions --verbose
+        cargo test --features="instruction-trace" --verbose
       shell: bash
     - name: CLI - Lint
       run: |
@@ -81,7 +80,7 @@ jobs:
       shell: bash
     - name: Generate test coverage
       run: |
-        cargo llvm-cov --lcov --output-path coverage.info
+        cargo llvm-cov --features="instruction-trace" --lcov --output-path coverage.info
       shell: bash
     - name: Upload test coverage
       run: bash <(curl -s https://codecov.io/bash) -f coverage.info || echo "Codecov did not collect coverage reports"
