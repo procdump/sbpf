@@ -47,7 +47,7 @@ impl TestContextObject {
 /// Compares an interpreter trace and a JIT trace.
 ///
 /// The log of the JIT can be longer because it only validates the instruction meter at branches.
-pub fn compare_trace_log(interpreter: &[TraceLogEntry], mut jit: &[TraceLogEntry]) -> bool {
+pub fn compare_instruction_trace(interpreter: &[TraceLogEntry], mut jit: &[TraceLogEntry]) -> bool {
     if jit.len() > interpreter.len() {
         jit = &jit[0..interpreter.len()];
     }
@@ -348,7 +348,7 @@ macro_rules! test_interpreter_and_jit {
                         );
                         diverged = true;
                     }
-                    if !compare_trace_log(&_trace_interpreter, trace_jit) {
+                    if !compare_instruction_trace(&_trace_interpreter, trace_jit) {
                         let analysis = Analysis::from_executable(&$executable).unwrap();
                         let stdout = std::io::stdout();
                         analysis

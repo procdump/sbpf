@@ -30,7 +30,7 @@ use solana_sbpf::{
 };
 use std::{fs::File, io::Read, sync::Arc};
 use test_utils::{
-    assert_error, compare_trace_log, create_vm, syscalls, test_interpreter_and_jit,
+    assert_error, compare_instruction_trace, create_vm, syscalls, test_interpreter_and_jit,
     test_interpreter_and_jit_asm, test_interpreter_and_jit_elf, test_syscall_asm,
     TestContextObject, PROG_TCP_PORT_80, TCP_SACK_ASM, TCP_SACK_MATCH, TCP_SACK_NOMATCH,
 };
@@ -3497,7 +3497,7 @@ fn execute_generated_program(prog: &[u8]) -> bool {
     let trace_jit = &vm.instruction_trace;
     debug_assert!(!trace_interpreter.is_empty());
     if format!("{result_interpreter:?}") != format!("{result_jit:?}")
-        || !compare_trace_log(&trace_interpreter, trace_jit)
+        || !compare_instruction_trace(&trace_interpreter, trace_jit)
     {
         let analysis =
             solana_sbpf::static_analysis::Analysis::from_executable(&executable).unwrap();
