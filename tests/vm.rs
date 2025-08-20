@@ -50,6 +50,8 @@ fn test_runtime_environment_slots() {
     check_slot!(env, registers, Registers);
     check_slot!(env, program_result, ProgramResult);
     check_slot!(env, memory_mapping, MemoryMapping);
+    #[cfg(feature = "instruction-trace")]
+    check_slot!(env, instruction_trace, InstructionTrace);
 }
 
 #[test]

@@ -127,8 +127,6 @@ impl Default for CfgNode {
 struct DummyContextObject {}
 
 impl ContextObject for DummyContextObject {
-    fn trace(&mut self, _state: [u64; 12]) {}
-
     fn consume(&mut self, _amount: u64) {}
 
     fn get_remaining(&self) -> u64 {
