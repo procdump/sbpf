@@ -1383,9 +1383,9 @@ impl<'a, C: ContextObject> JitCompiler<'a, C> {
             }
             self.emit_ins(X86Instruction::mov(OperandSize::S64, RSP, REGISTER_MAP[0]));
             self.emit_ins(X86Instruction::alu_immediate(OperandSize::S64, 0x81, 0, RSP, - 8 * 3, None)); // RSP -= 8 * 3;
-            self.emit_rust_call(Value::Constant64(C::trace as *const u8 as i64, false), &[
+            self.emit_rust_call(Value::Constant64(Vec::<crate::static_analysis::TraceLogEntry>::push as *const u8 as i64, false), &[
                 Argument { index: 1, value: Value::Register(REGISTER_MAP[0]) }, // registers
-                Argument { index: 0, value: Value::RegisterIndirect(REGISTER_PTR_TO_VM, self.slot_in_vm(RuntimeEnvironmentSlot::ContextObjectPointer), false) },
+                Argument { index: 0, value: Value::RegisterPlusConstant32(REGISTER_PTR_TO_VM, self.slot_in_vm(RuntimeEnvironmentSlot::InstructionTrace), false) },
             ], None);
             // Pop stack and return
             self.emit_ins(X86Instruction::alu_immediate(OperandSize::S64, 0x81, 0, RSP, 8 * 3, None)); // RSP += 8 * 3;

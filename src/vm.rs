@@ -138,8 +138,6 @@ impl<C: ContextObject> Executable<C> {
 
 /// Runtime context
 pub trait ContextObject {
-    /// Called for every instruction executed when tracing is enabled
-    fn trace(&mut self, state: [u64; 12]);
     /// Consume instructions from meter
     fn consume(&mut self, amount: u64);
     /// Get the number of remaining instructions allowed
@@ -213,6 +211,8 @@ pub enum RuntimeEnvironmentSlot {
     ProgramResult = 19,
     /// [EbpfVm::memory_mapping]
     MemoryMapping = 27,
+    /// [EbpfVm::instruction_trace]
+    InstructionTrace = 54,
 }
 
 /// A virtual machine to run eBPF programs.
@@ -297,6 +297,8 @@ pub struct EbpfVm<'a, C: ContextObject> {
     pub call_frames: Vec<CallFrame>,
     /// Loader built-in program
     pub loader: Arc<BuiltinProgram<C>>,
+    /// Collector for the instruction trace
+    pub instruction_trace: Vec<crate::static_analysis::TraceLogEntry>,
     /// TCP port for the debugger interface
     #[cfg(feature = "debugger")]
     pub debug_port: Option<u16>,
@@ -341,6 +343,7 @@ impl<'a, C: ContextObject> EbpfVm<'a, C> {
             debug_port: std::env::var("VM_DEBUG_PORT")
                 .ok()
                 .and_then(|v| v.parse::<u16>().ok()),
+            instruction_trace: Vec::default(),
         }
     }
 

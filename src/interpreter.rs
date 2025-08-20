@@ -188,7 +188,7 @@ impl<'a, 'b, C: ContextObject> Interpreter<'a, 'b, C> {
         let src = insn.src as usize;
 
         if config.enable_instruction_tracing {
-            self.vm.context_object_pointer.trace(self.reg);
+            self.vm.instruction_trace.push(self.reg);
         }
 
         match insn.opc {
