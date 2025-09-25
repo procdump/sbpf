@@ -1386,8 +1386,9 @@ impl<'a, C: ContextObject> JitCompiler<'a, C> {
             }
             self.emit_ins(X86Instruction::mov(OperandSize::S64, RSP, REGISTER_MAP[0]));
             self.emit_ins(X86Instruction::alu_immediate(OperandSize::S64, 0x81, 0, RSP, - 8 * 3, None)); // RSP -= 8 * 3;
-            self.emit_rust_call(Value::Constant64(Vec::<crate::static_analysis::TraceLogEntry>::push as *const u8 as i64, false), &[
-                Argument { index: 1, value: Value::Register(REGISTER_MAP[0]) }, // registers
+            self.emit_rust_call(Value::Constant64(trace_log_push as *const u8 as i64, false), &[
+                Argument { index: 2, value: Value::Constant64(0, false) }, // TODO: the executed instruction
+                Argument { index: 1, value: Value::Register(REGISTER_MAP[0]) }, // pointer to saved registers
                 Argument { index: 0, value: Value::RegisterPlusConstant32(REGISTER_PTR_TO_VM, self.slot_in_vm(RuntimeEnvironmentSlot::InstructionTrace), false) },
             ], None);
             // Pop stack and return
@@ -1673,4 +1674,16 @@ impl<'a, C: ContextObject> JitCompiler<'a, C> {
             unsafe { ptr::write_unaligned(jump.location as *mut i32, offset_value); }
         }
     }
+}
+
+/// A helper function for pushing the instruction trace from jited program.
+#[no_mangle]
+pub extern "C" fn trace_log_push(
+    trace_vec: &mut Vec<crate::static_analysis::TraceLogEntry>,
+    regs_ptr: *const u64, // pointer to saved registers
+    insn: u64,            // executed instruction
+) {
+    // Safety: regs_ptr must point to at least 12 u64s
+    let regs: [u64; 12] = unsafe { *regs_ptr.cast::<[u64; 12]>() };
+    trace_vec.push(crate::static_analysis::TraceLogEntry { regs, insn });
 }
