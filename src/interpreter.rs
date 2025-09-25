@@ -188,7 +188,10 @@ impl<'a, 'b, C: ContextObject> Interpreter<'a, 'b, C> {
         let src = insn.src as usize;
 
         #[cfg(feature = "instruction-trace")]
-        self.vm.instruction_trace.push(self.reg);
+        self.vm.instruction_trace.push(crate::static_analysis::TraceLogEntry {
+            regs: self.reg,
+            insn: u64::from_le_bytes(insn.to_array()),
+        });
 
         match insn.opc {
             ebpf::LD_DW_IMM if !self.executable.get_sbpf_version().disable_lddw() => {

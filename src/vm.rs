@@ -19,7 +19,7 @@ use crate::{
     interpreter::Interpreter,
     memory_region::MemoryMapping,
     program::{BuiltinFunction, BuiltinProgram, FunctionRegistry, SBPFVersion},
-    static_analysis::Analysis,
+    static_analysis::{Analysis, TraceLogEntry},
 };
 use std::{collections::BTreeMap, fmt::Debug};
 
@@ -151,14 +151,14 @@ pub struct DynamicAnalysis {
 
 impl DynamicAnalysis {
     /// Accumulates a trace
-    pub fn new(instruction_trace: &[[u64; 12]], analysis: &Analysis) -> Self {
+    pub fn new(instruction_trace: &[TraceLogEntry], analysis: &Analysis) -> Self {
         let mut result = Self {
             edge_counter_max: 0,
             edges: BTreeMap::new(),
         };
         let mut last_basic_block = usize::MAX;
         for traced_instruction in instruction_trace.iter() {
-            let pc = traced_instruction[11] as usize;
+            let pc = traced_instruction.regs[11] as usize;
             if analysis.cfg_nodes.contains_key(&pc) {
                 let counter = result
                     .edges

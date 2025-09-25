@@ -13,9 +13,18 @@ use rustc_demangle::demangle;
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
 /// Register state recorded after executing one instruction
-///
-/// The last register is the program counter (aka pc).
-pub type TraceLogEntry = [u64; 12];
+pub struct TraceLogEntry {
+    /// The last register is the program counter (aka pc).
+    pub regs: [u64; 12],
+    /// The executed instruction.
+    pub insn: u64,
+}
+
+impl PartialEq for TraceLogEntry {
+    fn eq(&self, other: &Self) -> bool {
+        self.regs == other.regs
+    }
+}
 
 /// Used for topological sort
 #[derive(PartialEq, Eq, Debug)]
@@ -489,13 +498,13 @@ impl<'a> Analysis<'a> {
             pc_to_insn_index[insn.ptr + 1] = index;
         }
         for (index, entry) in instruction_trace.iter().enumerate() {
-            let pc = entry[11] as usize;
+            let pc = entry.regs[11] as usize;
             let insn = &self.instructions[pc_to_insn_index[pc]];
             writeln!(
                 output,
                 "{:5?} {:016X?} {:5?}: {}",
                 index,
-                &entry[0..11],
+                &entry.regs[0..11],
                 pc,
                 self.disassemble_instruction(insn, pc),
             )?;
