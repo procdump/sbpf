@@ -13,6 +13,7 @@ use rustc_demangle::demangle;
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
 /// Register state recorded after executing one instruction
+#[derive(Debug, Clone)]
 pub struct TraceLogEntry {
     /// The last register is the program counter (aka pc).
     pub regs: [u64; 12],
