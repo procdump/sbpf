@@ -19,7 +19,7 @@ use crate::{
     interpreter::Interpreter,
     memory_region::MemoryMapping,
     program::{BuiltinFunction, BuiltinProgram, FunctionRegistry, SBPFVersion},
-    static_analysis::Analysis,
+    static_analysis::{Analysis, InstructionTraceEntry},
 };
 use std::{collections::BTreeMap, fmt::Debug};
 
@@ -298,7 +298,7 @@ pub struct EbpfVm<'a, C: ContextObject> {
     /// Loader built-in program
     pub loader: Arc<BuiltinProgram<C>>,
     /// Collector for the instruction trace
-    pub instruction_trace: Vec<crate::static_analysis::TraceLogEntry>,
+    pub instruction_trace: Vec<InstructionTraceEntry>,
     /// TCP port for the debugger interface
     #[cfg(feature = "debugger")]
     pub debug_port: Option<u16>,

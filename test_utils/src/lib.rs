@@ -14,7 +14,7 @@ use solana_sbpf::{
     elf::Executable,
     error::EbpfError,
     memory_region::{AccessViolationHandler, MemoryMapping, MemoryRegion},
-    static_analysis::TraceLogEntry,
+    static_analysis::InstructionTraceEntry,
     vm::ContextObject,
 };
 
@@ -47,7 +47,10 @@ impl TestContextObject {
 /// Compares an interpreter trace and a JIT trace.
 ///
 /// The log of the JIT can be longer because it only validates the instruction meter at branches.
-pub fn compare_instruction_trace(interpreter: &[TraceLogEntry], mut jit: &[TraceLogEntry]) -> bool {
+pub fn compare_instruction_trace(
+    interpreter: &[InstructionTraceEntry],
+    mut jit: &[InstructionTraceEntry],
+) -> bool {
     if jit.len() > interpreter.len() {
         jit = &jit[0..interpreter.len()];
     }
