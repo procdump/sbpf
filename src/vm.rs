@@ -436,7 +436,11 @@ impl<'a, C: ContextObject> EbpfVm<'a, C> {
             let digest = Sha256::digest(as_bytes(self.instruction_trace.as_slice()));
             let hex = hex::encode(digest);
             if let Some(file_name) = hex.get(..FILE_NAME_LEN) {
-                let base = std::path::PathBuf::from(vm_trace_dir).join(file_name);
+                let current_dir = std::env::current_dir()?;
+                let vm_trace_dir = current_dir.join(vm_trace_dir);
+                std::fs::create_dir_all(&vm_trace_dir)?;
+
+                let base = vm_trace_dir.join(file_name);
                 let mut regs_file = std::fs::File::create(base.with_extension("regs"))?;
                 let mut insns_file = std::fs::File::create(base.with_extension("insns"))?;
                 let (_vm_addr, program) = executable.get_text_bytes();
