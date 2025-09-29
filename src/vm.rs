@@ -21,8 +21,9 @@ use crate::{
     program::{BuiltinFunction, BuiltinProgram, FunctionRegistry, SBPFVersion},
     static_analysis::{Analysis, InstructionTraceEntry},
 };
-use std::{collections::BTreeMap, fmt::Debug};
+use std::{collections::BTreeMap, env::var_os, fmt::Debug, io::Write};
 
+use sha2::{Digest, Sha256};
 #[cfg(feature = "shuttle-test")]
 use shuttle::sync::Arc;
 #[cfg(not(feature = "shuttle-test"))]
@@ -399,6 +400,11 @@ impl<'a, C: ContextObject> EbpfVm<'a, C> {
         };
         let mut result = ProgramResult::Ok(0);
         std::mem::swap(&mut result, &mut self.program_result);
+
+        if config.enable_instruction_tracing {
+            let _ = self.dump_instruction_trace(executable);
+        }
+
         (instruction_count, result)
     }
 
@@ -418,4 +424,61 @@ impl<'a, C: ContextObject> EbpfVm<'a, C> {
             self.registers[5],
         );
     }
+
+    /// Save the instruction trace generated from this VM provided that
+    /// the environment variable `VM_TRACE_DIR` is set.
+    pub fn dump_instruction_trace(
+        &self,
+        executable: &Executable<C>,
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        if let Some(vm_trace_dir) = &var_os("VM_TRACE_DIR") {
+            const FILE_NAME_LEN: usize = 16;
+            let digest = Sha256::digest(as_bytes(self.instruction_trace.as_slice()));
+            let hex = hex::encode(digest);
+            if let Some(file_name) = hex.get(..FILE_NAME_LEN) {
+                let base = std::path::PathBuf::from(vm_trace_dir).join(file_name);
+                let mut regs_file = std::fs::File::create(base.with_extension("regs"))?;
+                let mut insns_file = std::fs::File::create(base.with_extension("insns"))?;
+                let (_vm_addr, program) = executable.get_text_bytes();
+
+                for (regs, insn) in self.instruction_trace.iter().map(|registers| {
+                    (
+                        as_bytes(registers),
+                        ebpf::get_insn_unchecked(program, registers[11] as usize).to_array(),
+                    )
+                }) {
+                    let _ = regs_file.write(regs)?;
+                    let _ = insns_file.write(insn.as_slice())?;
+                }
+            }
+        }
+
+        Ok(())
+    }
+}
+
+trait AsBytes<'a> {
+    fn get_ptr(&self) -> *const u8;
+}
+
+impl<'a> AsBytes<'a> for [u64] {
+    fn get_ptr(&self) -> *const u8 {
+        self.as_ptr().cast()
+    }
+}
+
+impl<'a> AsBytes<'a> for [u64; 12] {
+    fn get_ptr(&self) -> *const u8 {
+        self.as_ptr().cast()
+    }
+}
+
+impl<'a> AsBytes<'a> for [[u64; 12]] {
+    fn get_ptr(&self) -> *const u8 {
+        self.as_ptr().cast()
+    }
+}
+
+fn as_bytes<'a, T: AsBytes<'a> + ?Sized>(slice: &'a T) -> &'a [u8] {
+    unsafe { std::slice::from_raw_parts(slice.get_ptr(), std::mem::size_of_val(slice)) }
 }
