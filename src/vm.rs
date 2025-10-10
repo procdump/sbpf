@@ -366,7 +366,7 @@ impl<'a, C: ContextObject> EbpfVm<'a, C> {
             if let Some(debug_port) = debug_port {
                 crate::debugger::execute(
                     &mut interpreter,
-                    debug_port + _debug_port_offset.unwrap_or(0),
+                    debug_port.saturating_add(_debug_port_offset.unwrap_or(0)),
                 );
             } else {
                 while interpreter.step() {}
