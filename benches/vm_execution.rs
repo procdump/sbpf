@@ -37,7 +37,7 @@ fn bench_init_interpreter_start(bencher: &mut Bencher) {
     );
     bencher.iter(|| {
         vm.context_object_pointer.remaining = 37;
-        vm.execute_program(&executable, true).1.unwrap()
+        vm.execute_program(&executable, true, None).1.unwrap()
     });
 }
 
