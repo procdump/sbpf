@@ -45,10 +45,15 @@ fn wait_for_tcp(port: u16) -> DynResult<TcpStream> {
 /// Connect to the debugger and hand over the control of the interpreter
 pub fn execute<C: ContextObject>(interpreter: &mut Interpreter<C>, port: u16) {
     if let Some(h) = interpreter.executable.get_pre_load_sha256() {
-        eprintln!(
-            "Debugging executable with (pre-load) SHA256: {}",
-            hex::encode(h)
-        )
+        let hash = hex::encode(h);
+        eprintln!("Debugging executable with (pre-load) SHA256: {}", hash);
+
+        // Check if user asks to save the hash in a file
+        if let Ok(ref info_file) = std::env::var("VM_DEBUG_EXEC_INFO_FILE") {
+            if std::fs::write(info_file, hash).is_err() {
+                eprintln!("Cannot write VM executable information in {}", info_file);
+            }
+        }
     }
 
     let connection: Box<dyn ConnectionExt<Error = std::io::Error>> =
