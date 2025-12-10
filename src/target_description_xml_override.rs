@@ -58,8 +58,8 @@ const TARGET_XML: &str = r#"
 <?xml version="1.0"?>
 <!DOCTYPE target SYSTEM "gdb-target.dtd">
 <target version="1.0">
-    <architecture>armv4t</architecture>
-    <feature name="org.gnu.gdb.arm.core">
+    <architecture>sbf</architecture>
+    <feature name="org.gnu.gdb.sbf.core">
         <vector id="padding" type="uint32" count="25"/>
 
         <reg name="r0" bitsize="32" type="uint32"/>
