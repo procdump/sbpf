@@ -40,8 +40,8 @@ impl<'a, 'b, C: ContextObject>
         buf: &mut [u8],
     ) -> TargetResult<usize, Self> {
         let xml = match annex {
-            b"target.xml" => TARGET_XML.trim(),
-            b"extra.xml" => EXTRA_XML.trim(),
+            b"target.xml" => std::fs::read_to_string("/tmp/target.xml").unwrap(),
+            // b"extra.xml" => "EXTRA_XML".trim(),
             _ => return Err(TargetError::NonFatal),
         };
 
@@ -58,12 +58,12 @@ const TARGET_XML: &str = r#"
 <?xml version="1.0"?>
 <!DOCTYPE target SYSTEM "gdb-target.dtd">
 <target version="1.0">
-    <architecture>sbf</architecture>
-    <feature name="org.gnu.gdb.sbf.core">
+    <architecture>sbfv1</architecture>
+    <feature name="org.gnu.gdb.sbfv1.core">
         <vector id="padding" type="uint32" count="25"/>
 
-        <reg name="r0" bitsize="32" type="uint32"/>
-        <reg name="r1" bitsize="32" type="uint32"/>
+        <reg name="r0" bitsize="32" type="uint64"/>
+        <reg name="r1" bitsize="32" type="uint64"/>
         <reg name="r2" bitsize="32" type="uint32"/>
         <reg name="r3" bitsize="32" type="uint32"/>
         <reg name="r4" bitsize="32" type="uint32"/>
@@ -103,24 +103,24 @@ const TARGET_XML: &str = r#"
 </target>
 "#;
 
-const EXTRA_XML: &str = r#"
-<?xml version="1.0"?>
-<!DOCTYPE target SYSTEM "gdb-target.dtd">
-<feature name="custom-armv4t-extension">
-    <!--
-        maps to a simple scratch register within the emulator. the GDB
-        client can read the register using `p $custom` and set it using
-        `set $custom=1337`
-    -->
-    <reg name="custom" bitsize="32" type="uint32"/>
+// const EXTRA_XML: &str = r#"
+// <?xml version="1.0"?>
+// <!DOCTYPE target SYSTEM "gdb-target.dtd">
+// <feature name="custom-armv4t-extension">
+//     <!--
+//         maps to a simple scratch register within the emulator. the GDB
+//         client can read the register using `p $custom` and set it using
+//         `set $custom=1337`
+//     -->
+//     <reg name="custom" bitsize="32" type="uint32"/>
 
-    <!--
-        pseudo-register that return the current time when read.
+//     <!--
+//         pseudo-register that return the current time when read.
 
-        notably, i've set up the target to NOT send this register as part of
-        the regular register list, which means that GDB will fetch/update
-        this register via the 'p' and 'P' packets respectively
-    -->
-    <reg name="time" bitsize="32" type="uint32"/>
-</feature>
-"#;
+//         notably, i've set up the target to NOT send this register as part of
+//         the regular register list, which means that GDB will fetch/update
+//         this register via the 'p' and 'P' packets respectively
+//     -->
+//     <reg name="time" bitsize="32" type="uint32"/>
+// </feature>
+// "#;
