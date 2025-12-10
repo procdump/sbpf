@@ -163,6 +163,15 @@ impl<'a, 'b, C: ContextObject> Target for Interpreter<'a, 'b, C> {
     fn support_monitor_cmd(&mut self) -> Option<target::ext::monitor_cmd::MonitorCmdOps<'_, Self>> {
         Some(self)
     }
+
+    #[inline(always)]
+    fn support_target_description_xml_override(
+        &mut self,
+    ) -> Option<
+        target::ext::target_description_xml_override::TargetDescriptionXmlOverrideOps<'_, Self>,
+    > {
+        Some(self)
+    }
 }
 
 fn get_host_ptr<C: ContextObject>(
