@@ -264,7 +264,7 @@ pub enum RuntimeEnvironmentSlot {
 ///
 /// let mut vm = EbpfVm::new(loader, sbpf_version, &mut context_object, memory_mapping, stack_len);
 ///
-/// let (instruction_count, result) = vm.execute_program(&executable, true, None);
+/// let (instruction_count, result) = vm.execute_program(&executable, true);
 /// assert_eq!(instruction_count, 2);
 /// assert_eq!(result.unwrap(), 0);
 /// ```
@@ -351,7 +351,7 @@ impl<'a, C: ContextObject> EbpfVm<'a, C> {
         &mut self,
         executable: &Executable<C>,
         interpreted: bool,
-        _debug_port_offset: Option<u16>,
+        // _debug_port_offset: Option<u16>,
     ) -> (u64, ProgramResult) {
         debug_assert!(Arc::ptr_eq(&self.loader, executable.get_loader()));
         self.registers[11] = executable.get_entrypoint_instruction_offset() as u64;
@@ -366,10 +366,7 @@ impl<'a, C: ContextObject> EbpfVm<'a, C> {
             let mut interpreter = Interpreter::new(self, executable, self.registers);
             #[cfg(feature = "debugger")]
             if let Some(debug_port) = debug_port {
-                crate::debugger::execute(
-                    &mut interpreter,
-                    debug_port.saturating_add(_debug_port_offset.unwrap_or(0)),
-                );
+                crate::debugger::execute(&mut interpreter, debug_port);
             } else {
                 while interpreter.step() {}
             }

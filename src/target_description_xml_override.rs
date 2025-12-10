@@ -28,7 +28,10 @@ pub fn copy_range_to_buf(data: &[u8], offset: u64, length: usize, buf: &mut [u8]
 use crate::interpreter::Interpreter;
 use crate::vm::ContextObject;
 
-impl<'a, 'b, C: ContextObject> target::ext::target_description_xml_override::TargetDescriptionXmlOverride for Interpreter<'a, 'b, C> {
+impl<'a, 'b, C: ContextObject>
+    target::ext::target_description_xml_override::TargetDescriptionXmlOverride
+    for Interpreter<'a, 'b, C>
+{
     fn target_description_xml(
         &self,
         annex: &[u8],
