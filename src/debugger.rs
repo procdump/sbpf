@@ -67,10 +67,7 @@ pub fn execute<C: ContextObject>(interpreter: &mut Interpreter<C>, port: u16) {
     loop {
         dbg = match dbg {
             state_machine::GdbStubStateMachine::Idle(mut dbg_inner) => {
-                let mut byte = match dbg_inner.borrow_conn().read() {
-                    Err(_e) => b'$',
-                    Ok(b) => b,
-                };
+                let mut byte = dbg_inner.borrow_conn().read().unwrap();
                 eprintln!("byte: {}", byte as char);
                 if amend_csum == true {
                     if byte as char == '4' {
