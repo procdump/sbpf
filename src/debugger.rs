@@ -63,11 +63,20 @@ pub fn execute<C: ContextObject>(interpreter: &mut Interpreter<C>, port: u16) {
         .run_state_machine(interpreter)
         .expect("Cannot start debugging state machine");
     let mut q_cmd_count = 0;
+    let mut amend_csum = false;
     loop {
         dbg = match dbg {
             state_machine::GdbStubStateMachine::Idle(mut dbg_inner) => {
-                let byte = dbg_inner.borrow_conn().read().unwrap();
+                let mut byte = dbg_inner.borrow_conn().read().unwrap();
                 eprintln!("byte: {}", byte as char);
+                if amend_csum == true {
+                    amend_csum = false;
+                    if byte as char == '4' {
+                        byte = b'9';
+                    } else if byte as char == '9' {
+                        byte = b'1';
+                    }
+                }
                 if byte == b'q' {
                     q_cmd_count += 1;
                 }
@@ -80,6 +89,7 @@ pub fn execute<C: ContextObject>(interpreter: &mut Interpreter<C>, port: u16) {
                     eprintln!("");
                     dbg_inner.borrow_conn().write_all(b"$#00").unwrap();
                     let state = dbg_inner.incoming_data(interpreter, b'$').unwrap();
+                    amend_csum = true;
 
                     match state {
                         GdbStubStateMachine::Idle(mut dbg_inner) => {
