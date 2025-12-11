@@ -78,6 +78,7 @@ pub fn execute<C: ContextObject>(interpreter: &mut Interpreter<C>, port: u16) {
                     eprintln!("");
                     dbg_inner.borrow_conn().write_all(b"$#00").unwrap();
 
+                    q_cmd_count += 1; // don't get to the 2 again
                     let byte = dbg_inner.borrow_conn().read().unwrap();
                     dbg_inner.incoming_data(interpreter, byte).unwrap()
                 } else {
