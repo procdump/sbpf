@@ -65,6 +65,7 @@ pub fn execute<C: ContextObject>(interpreter: &mut Interpreter<C>, port: u16) {
         dbg = match dbg {
             state_machine::GdbStubStateMachine::Idle(mut dbg_inner) => {
                 let byte = dbg_inner.borrow_conn().read().unwrap();
+                eprintln!("byte: {:02x}", byte);
                 dbg_inner.incoming_data(interpreter, byte).unwrap()
             }
 
