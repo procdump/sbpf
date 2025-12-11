@@ -61,11 +61,20 @@ pub fn execute<C: ContextObject>(interpreter: &mut Interpreter<C>, port: u16) {
     let mut dbg = GdbStub::new(connection)
         .run_state_machine(interpreter)
         .expect("Cannot start debugging state machine");
+    let mut q_cmd_count = 0;
     loop {
         dbg = match dbg {
             state_machine::GdbStubStateMachine::Idle(mut dbg_inner) => {
                 let byte = dbg_inner.borrow_conn().read().unwrap();
-                eprintln!("byte: {:02x}", byte);
+                eprintln!("byte: {}", byte);
+                // q_cmd_count += 1;
+                // if q_cmd_count == 2 {
+                //     for _ in 0..11 {
+                //         let b = dbg_inner.borrow_conn().read().unwrap();
+                //         eprint!("{}", b);
+                //     }
+                // }
+                // eprintln!("");
                 dbg_inner.incoming_data(interpreter, byte).unwrap()
             }
 
