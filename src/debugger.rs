@@ -89,9 +89,12 @@ pub fn execute<C: ContextObject>(interpreter: &mut Interpreter<C>, port: u16) {
                         eprint!("{}", b as char);
                     }
                     eprintln!("");
+                    let hostinfo = std::fs::read_to_string("/tmp/hostinfo.txt").unwrap();
+                    let h_as_bytes = hostinfo.trim().as_bytes();
+                    eprintln!("as bytes: {:?}", h_as_bytes);
                     dbg_inner
                         .borrow_conn()
-                        .write_all(b"$triple:sbf--;arch:sbfv1;vendor:*;ostype:*;#70")
+                        .write_all(hostinfo.trim().as_bytes())
                         .unwrap();
                     let state = dbg_inner.incoming_data(interpreter, b'$').unwrap();
                     amend_csum = true;
