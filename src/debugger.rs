@@ -67,15 +67,20 @@ pub fn execute<C: ContextObject>(interpreter: &mut Interpreter<C>, port: u16) {
             state_machine::GdbStubStateMachine::Idle(mut dbg_inner) => {
                 let byte = dbg_inner.borrow_conn().read().unwrap();
                 eprintln!("byte: {}", byte as char);
-                // q_cmd_count += 1;
-                // if q_cmd_count == 2 {
-                //     for _ in 0..11 {
-                //         let b = dbg_inner.borrow_conn().read().unwrap();
-                //         eprint!("{}", b);
-                //     }
-                // }
-                // eprintln!("");
-                dbg_inner.incoming_data(interpreter, byte).unwrap()
+                q_cmd_count += 1;
+                if q_cmd_count == 2 {
+                    for _ in 0..11 {
+                        let b = dbg_inner.borrow_conn().read().unwrap();
+                        eprint!("{}", b as char);
+                    }
+                    eprintln!("");
+                    dbg_inner.borrow_conn().write_all(b"$#00").unwrap();
+
+                    let byte = dbg_inner.borrow_conn().read().unwrap();
+                    dbg_inner.incoming_data(interpreter, byte).unwrap()
+                } else {
+                    dbg_inner.incoming_data(interpreter, byte).unwrap()
+                }
             }
 
             state_machine::GdbStubStateMachine::Disconnected(_dbg_inner) => {
