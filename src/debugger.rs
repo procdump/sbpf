@@ -4,6 +4,7 @@ use std::net::{TcpListener, TcpStream};
 
 use gdbstub::common::Signal;
 use gdbstub::conn::ConnectionExt;
+use gdbstub::stub::state_machine::GdbStubStateMachine;
 use gdbstub::stub::{state_machine, GdbStub, SingleThreadStopReason};
 
 use gdbstub::arch::lldb::{Encoding, Format, Generic, Register};
@@ -71,16 +72,22 @@ pub fn execute<C: ContextObject>(interpreter: &mut Interpreter<C>, port: u16) {
                     q_cmd_count += 1;
                 }
                 if q_cmd_count == 2 {
+                    q_cmd_count += 1; // don't get to the 2 again
                     for _ in 0..11 {
                         let b = dbg_inner.borrow_conn().read().unwrap();
                         eprint!("{}", b as char);
                     }
                     eprintln!("");
                     dbg_inner.borrow_conn().write_all(b"$#00").unwrap();
+                    let state = dbg_inner.incoming_data(interpreter, b'$').unwrap();
 
-                    q_cmd_count += 1; // don't get to the 2 again
-                    let byte = dbg_inner.borrow_conn().read().unwrap();
-                    dbg_inner.incoming_data(interpreter, byte).unwrap()
+                    match state {
+                        GdbStubStateMachine::Idle(mut dbg_inner) => {
+                            let byte = dbg_inner.borrow_conn().read().unwrap();
+                            dbg_inner.incoming_data(interpreter, byte).unwrap()
+                        }
+                        _ => todo!(),
+                    }
                 } else {
                     dbg_inner.incoming_data(interpreter, byte).unwrap()
                 }
