@@ -73,8 +73,10 @@ pub fn execute<C: ContextObject>(interpreter: &mut Interpreter<C>, port: u16) {
                     amend_csum = false;
                     if byte as char == '4' {
                         byte = b'9';
+                        eprintln!("Changing 4 to 9");
                     } else if byte as char == '9' {
                         byte = b'1';
+                        eprintln!("Changing 9 to 1");
                     }
                 }
                 if byte == b'q' {
