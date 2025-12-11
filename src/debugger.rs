@@ -89,7 +89,7 @@ pub fn execute<C: ContextObject>(interpreter: &mut Interpreter<C>, port: u16) {
                         eprint!("{}", b as char);
                     }
                     eprintln!("");
-                    dbg_inner.borrow_conn().write_all(b"$triple:sbf--;arch:sbfv1;#70").unwrap();
+                    dbg_inner.borrow_conn().write_all(b"$#00").unwrap();
                     let state = dbg_inner.incoming_data(interpreter, b'$').unwrap();
                     amend_csum = true;
 
