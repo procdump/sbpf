@@ -87,7 +87,7 @@ fn test_gdbstub_architecture() {
 
     const GDBSTUB_TEST_DEBUG_PORT: &'static str = "11212";
 
-    fn read_gdbstub_reply(stream: &mut TcpStream, buf: &mut Vec<u8>) -> std::io::Result<String> {
+    fn read_reply(stream: &mut TcpStream, buf: &mut Vec<u8>) -> std::io::Result<String> {
         // Introduce buffering.
 
         let mut src = BufReader::new(stream);
@@ -137,15 +137,15 @@ fn test_gdbstub_architecture() {
             vm.execute_program(&executable, true).1.unwrap();
         });
         // If this is set leave the stub port listening hence
-        // providing a simple test environment for playing with
-        // `solana-lldb` as a client.
+        // providing a simple test environment for playing with,
+        // for instance, `solana-lldb` as a client.
         if std::env::var("DEBUG_GDBSTUB_ARCH").is_err() {
             s.spawn(|| -> std::io::Result<()> {
                 let mut buf = Vec::new();
                 let stub_addr =
                     SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), debug_port);
                 let mut retries = 20;
-                let mut stream = loop {
+                let mut gdbstub = loop {
                     retries -= 1;
                     match std::net::TcpStream::connect(&stub_addr) {
                         Err(e) => {
@@ -159,13 +159,13 @@ fn test_gdbstub_architecture() {
                     }
                 };
                 // Check the remote gdbstub's architecture is indeed `sbfv0` i.e `sbf`.
-                stream.write_all(b"$qXfer:features:read:target.xml:0,fff#7d")?;
-                let reply = read_gdbstub_reply(&mut stream, &mut buf)?;
+                gdbstub.write_all(b"$qXfer:features:read:target.xml:0,fff#7d")?;
+                let reply = read_reply(&mut gdbstub, &mut buf)?;
                 assert!(reply.contains("<architecture>sbf</architecture>"));
 
                 // Gracefully shutdown the remote gdbstub.
-                stream.write_all(b"$D#44")?;
-                let reply = read_gdbstub_reply(&mut stream, &mut buf)?;
+                gdbstub.write_all(b"$D#44")?;
+                let reply = read_reply(&mut gdbstub, &mut buf)?;
                 assert_eq!("+$OK#9a", reply);
                 Ok(())
             });

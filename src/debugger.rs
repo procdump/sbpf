@@ -626,6 +626,9 @@ impl<'a, 'b, C: ContextObject>
     <!-- Program Counter R11 -->
     <reg name="pc" bitsize="64" regnum="11" dwarf_regnum="11" type="code_ptr" encoding="uint" format="hex" generic="pc"/>
 
+    <!-- Instruction Counter R12 -->
+    <reg name="icount_remain" bitsize="64" regnum="12" type="uint64" encoding="uint" format="decimal"/>
+
   </feature>
 </target>"#
             ),
