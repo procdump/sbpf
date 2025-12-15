@@ -89,7 +89,6 @@ fn test_gdbstub_architecture() {
 
     fn read_reply(stream: &mut TcpStream, buf: &mut Vec<u8>) -> std::io::Result<String> {
         // Introduce buffering.
-
         let mut src = BufReader::new(stream);
         // Clear the destination buffer first.
         buf.clear();
