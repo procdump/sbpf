@@ -158,6 +158,7 @@ fn test_gdbstub_architecture() {
                     }
                 };
                 // Check the remote gdbstub's architecture is indeed `sbfv0` i.e `sbf`.
+                // https://github.com/anza-xyz/llvm-project/blob/e9617fb71b9ae6c2eaab4e5bd627202fbdbf341b/lldb/source/Utility/ArchSpec.cpp#L252
                 gdbstub.write_all(b"$qXfer:features:read:target.xml:0,fff#7d")?;
                 let reply = read_reply(&mut gdbstub, &mut buf)?;
                 assert!(reply.contains("<architecture>sbf</architecture>"));
