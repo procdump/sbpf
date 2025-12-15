@@ -163,6 +163,11 @@ fn test_gdbstub_architecture() {
                 let reply = read_reply(&mut gdbstub, &mut buf)?;
                 assert!(reply.contains("<architecture>sbf</architecture>"));
 
+                // Check the icount_remain pseudo register is 10_000_000_000 (0x2540BE400).
+                gdbstub.write_all(b"$pc#d3")?;
+                let reply = read_reply(&mut gdbstub, &mut buf)?;
+                assert_eq!("+$00e40b540200*!#01", reply);
+
                 // Gracefully shutdown the remote gdbstub.
                 gdbstub.write_all(b"$D#44")?;
                 let reply = read_reply(&mut gdbstub, &mut buf)?;
