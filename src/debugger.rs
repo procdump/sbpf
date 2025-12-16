@@ -68,59 +68,60 @@ pub fn execute<C: ContextObject>(interpreter: &mut Interpreter<C>, port: u16) {
     loop {
         dbg = match dbg {
             state_machine::GdbStubStateMachine::Idle(mut dbg_inner) => {
-                match dbg_inner.borrow_conn().read() {
-                    Ok(byte) => {
-                        eprintln!("Idle got: {}", byte as char);
-                        dbg_inner.incoming_data(interpreter, byte).unwrap()
-                    },
-                    Err(e) => {
-                        eprintln!("Error reading a byte: {}", e);
-                        std::thread::sleep(Duration::from_secs(1));
-                        dbg_inner.borrow_conn().as_mut().flush().unwrap();
-                        dbg_inner.into()
+                // match dbg_inner.borrow_conn().read() {
+                //     Ok(byte) => {
+                //         eprintln!("Idle got: {}", byte as char);
+                //         dbg_inner.incoming_data(interpreter, byte).unwrap()
+                //     },
+                //     Err(e) => {
+                //         eprintln!("Error reading a byte: {}", e);
+                //         std::thread::sleep(Duration::from_secs(1));
+                //         dbg_inner.borrow_conn().as_mut().flush().unwrap();
+                //         dbg_inner.into()
+                //     }
+                // }
+                let mut byte = dbg_inner.borrow_conn().read().unwrap();
+                eprintln!("byte: {}", byte as char);
+                if amend_csum == true {
+                    if byte as char == '4' {
+                        byte = b'9';
+                        eprintln!("Changing 4 to 9");
+                    } else if byte as char == '9' {
+                        byte = b'1';
+                        eprintln!("Changing 9 to 1");
+                        amend_csum = false;
                     }
                 }
-                // eprintln!("byte: {}", byte as char);
-                // if amend_csum == true {
-                //     if byte as char == '4' {
-                //         byte = b'9';
-                //         eprintln!("Changing 4 to 9");
-                //     } else if byte as char == '9' {
-                //         byte = b'1';
-                //         eprintln!("Changing 9 to 1");
-                //         amend_csum = false;
-                //     }
-                // }
-                // if byte == b'q' {
-                //     q_cmd_count += 1;
-                // }
-                // if q_cmd_count == 2 {
-                //     q_cmd_count += 1; // don't get to the 2 again
-                //     for _ in 0..11 {
-                //         let b = dbg_inner.borrow_conn().read().unwrap();
-                //         eprint!("{}", b as char);
-                //     }
-                //     eprintln!("");
-                //     let hostinfo = std::fs::read_to_string("/tmp/hostinfo.txt").unwrap();
-                //     let h_as_bytes = hostinfo.trim().as_bytes();
-                //     eprintln!("as bytes: {:?}", h_as_bytes);
-                //     dbg_inner
-                //         .borrow_conn()
-                //         .write_all(hostinfo.trim().as_bytes())
-                //         .unwrap();
-                //     let state = dbg_inner.incoming_data(interpreter, b'$').unwrap();
-                //     amend_csum = true;
+                if byte == b'q' {
+                    q_cmd_count += 1;
+                }
+                if q_cmd_count == 2 {
+                    q_cmd_count += 1; // don't get to the 2 again
+                    for _ in 0..11 {
+                        let b = dbg_inner.borrow_conn().read().unwrap();
+                        eprint!("{}", b as char);
+                    }
+                    eprintln!("");
+                    let hostinfo = std::fs::read_to_string("/tmp/hostinfo.txt").unwrap();
+                    let h_as_bytes = hostinfo.trim().as_bytes();
+                    eprintln!("as bytes: {:?}", h_as_bytes);
+                    dbg_inner
+                        .borrow_conn()
+                        .write_all(hostinfo.trim().as_bytes())
+                        .unwrap();
+                    let state = dbg_inner.incoming_data(interpreter, b'$').unwrap();
+                    amend_csum = true;
 
-                //     match state {
-                //         GdbStubStateMachine::Idle(mut dbg_inner) => {
-                //             let byte = dbg_inner.borrow_conn().read().unwrap();
-                //             dbg_inner.incoming_data(interpreter, byte).unwrap()
-                //         }
-                //         _ => todo!(),
-                //     }
-                // } else {
-                //     dbg_inner.incoming_data(interpreter, byte).unwrap()
-                // }
+                    match state {
+                        GdbStubStateMachine::Idle(mut dbg_inner) => {
+                            let byte = dbg_inner.borrow_conn().read().unwrap();
+                            dbg_inner.incoming_data(interpreter, byte).unwrap()
+                        }
+                        _ => todo!(),
+                    }
+                } else {
+                    dbg_inner.incoming_data(interpreter, byte).unwrap()
+                }
             }
 
             state_machine::GdbStubStateMachine::Disconnected(_dbg_inner) => {
