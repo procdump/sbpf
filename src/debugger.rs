@@ -69,7 +69,10 @@ pub fn execute<C: ContextObject>(interpreter: &mut Interpreter<C>, port: u16) {
         dbg = match dbg {
             state_machine::GdbStubStateMachine::Idle(mut dbg_inner) => {
                 match dbg_inner.borrow_conn().read() {
-                    Ok(byte) => dbg_inner.incoming_data(interpreter, byte).unwrap(),
+                    Ok(byte) => {
+                        eprintln!("Idle got: {}", byte as char);
+                        dbg_inner.incoming_data(interpreter, byte).unwrap()
+                    },
                     Err(e) => {
                         eprintln!("Error reading a byte: {}", e);
                         std::thread::sleep(Duration::from_secs(1));
