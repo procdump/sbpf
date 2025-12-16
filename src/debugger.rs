@@ -71,6 +71,7 @@ pub fn execute<C: ContextObject>(interpreter: &mut Interpreter<C>, port: u16) {
                     Ok(byte) => dbg_inner.incoming_data(interpreter, byte).unwrap(),
                     Err(e) => {
                         eprintln!("Error reading a byte: {}", e);
+                        dbg_inner.borrow_conn().as_mut().flush().unwrap();
                         dbg_inner.into()
                     }
                 }
