@@ -82,22 +82,20 @@ fn test_builtin_program_eq() {
 fn test_gdbstub_architecture() {
     use byteorder::{ReadBytesExt, WriteBytesExt};
     use std::io::{BufRead, BufReader, Write};
-    use std::net::{IpAddr, Ipv4Addr, SocketAddr, TcpStream};
+    use std::net::{IpAddr, Ipv4Addr, SocketAddr};
     use std::time::Duration;
 
     const GDBSTUB_TEST_DEBUG_PORT: &'static str = "11212";
 
-    fn read_reply(stream: &mut TcpStream, buf: &mut Vec<u8>) -> std::io::Result<String> {
-        // Introduce buffering.
-        let mut src = BufReader::new(stream);
+    fn read_reply<R: BufRead>(reader: &mut R, buf: &mut Vec<u8>) -> std::io::Result<String> {
         // Clear the destination buffer first.
         buf.clear();
         // Read till the # character.
-        src.read_until(b'#', buf)?;
+        reader.read_until(b'#', buf)?;
         // Then read exactly 2 bytes representing the checksum.
-        let c = src.read_u8()?;
+        let c = reader.read_u8()?;
         buf.write_u8(c)?;
-        let c = src.read_u8()?;
+        let c = reader.read_u8()?;
         buf.write_u8(c)?;
         let reply = String::from_utf8_lossy(buf).to_string();
         // eprintln!("gdbstub reply: {}", reply);
@@ -144,7 +142,7 @@ fn test_gdbstub_architecture() {
                 let stub_addr =
                     SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), debug_port);
                 let mut retries = 20;
-                let mut gdbstub = loop {
+                let (mut reader, mut writer) = loop {
                     retries -= 1;
                     match std::net::TcpStream::connect(&stub_addr) {
                         Err(e) => {
@@ -154,23 +152,24 @@ fn test_gdbstub_architecture() {
                             std::thread::sleep(Duration::from_millis(100));
                             continue;
                         }
-                        Ok(stream) => break stream,
+                        Ok(stream) => break (BufReader::new(stream.try_clone()?), stream),
                     }
                 };
+
                 // Check the remote gdbstub's architecture is indeed `sbfv0` i.e `sbf`.
                 // https://github.com/anza-xyz/llvm-project/blob/e9617fb71b9ae6c2eaab4e5bd627202fbdbf341b/lldb/source/Utility/ArchSpec.cpp#L252
-                gdbstub.write_all(b"$qXfer:features:read:target.xml:0,fff#7d")?;
-                let reply = read_reply(&mut gdbstub, &mut buf)?;
+                writer.write_all(b"$qXfer:features:read:target.xml:0,fff#7d")?;
+                let reply = read_reply(&mut reader, &mut buf)?;
                 assert!(reply.contains("<architecture>sbf</architecture>"));
 
                 // Check the icount_remain pseudo register is 10_000_000_000 (0x2540BE400).
-                gdbstub.write_all(b"$pc#d3")?;
-                let reply = read_reply(&mut gdbstub, &mut buf)?;
+                writer.write_all(b"$pc#d3")?;
+                let reply = read_reply(&mut reader, &mut buf)?;
                 assert_eq!("+$00e40b540200*!#01", reply);
 
                 // Gracefully shutdown the remote gdbstub.
-                gdbstub.write_all(b"$D#44")?;
-                let reply = read_reply(&mut gdbstub, &mut buf)?;
+                writer.write_all(b"$D#44")?;
+                let reply = read_reply(&mut reader, &mut buf)?;
                 assert_eq!("+$OK#9a", reply);
                 Ok(())
             });
