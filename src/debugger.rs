@@ -1,6 +1,7 @@
 //! Debugger for the virtual machines' interpreter.
 
 use std::net::{TcpListener, TcpStream};
+use std::time::Duration;
 
 use gdbstub::common::Signal;
 use gdbstub::conn::ConnectionExt;
@@ -71,6 +72,7 @@ pub fn execute<C: ContextObject>(interpreter: &mut Interpreter<C>, port: u16) {
                     Ok(byte) => dbg_inner.incoming_data(interpreter, byte).unwrap(),
                     Err(e) => {
                         eprintln!("Error reading a byte: {}", e);
+                        std::thread::sleep(Duration::from_secs(1));
                         dbg_inner.borrow_conn().as_mut().flush().unwrap();
                         dbg_inner.into()
                     }
