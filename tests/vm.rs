@@ -156,11 +156,11 @@ fn test_gdbstub_architecture() {
                     }
                 };
 
-                // Check the remote gdbstub's architecture is indeed `sbfv0` i.e `sbf`.
-                // https://github.com/anza-xyz/llvm-project/blob/e9617fb71b9ae6c2eaab4e5bd627202fbdbf341b/lldb/source/Utility/ArchSpec.cpp#L252
+                // Check the remote gdbstub's architecture is indeed `sbpfv0` i.e `sbpf`.
+                // https://github.com/anza-xyz/llvm-project/blob/cefd64747bb027d9755efa4d674ee4cf5772e7c2/lldb/source/Utility/ArchSpec.cpp#L252
                 writer.write_all(b"$qXfer:features:read:target.xml:0,fff#7d")?;
                 let reply = read_reply(&mut reader, &mut buf)?;
-                assert!(reply.contains("<architecture>sbf</architecture>"));
+                assert!(reply.contains("<architecture>sbpf</architecture>"));
 
                 // Check the icount_remain pseudo register is 10_000_000_000 (0x2540BE400).
                 writer.write_all(b"$pc#d3")?;

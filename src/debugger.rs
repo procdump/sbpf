@@ -598,7 +598,7 @@ impl<'a, 'b, C: ContextObject>
         buf: &mut [u8],
     ) -> TargetResult<usize, Self> {
         let gdbstub_arch: GdbStubArch = self.executable.get_sbpf_version().into();
-        let feature_name = "org.gnu.gdb.sbf.core";
+        let feature_name = "org.gnu.gdb.sbpf.core";
         let xml = match annex {
             b"target.xml" => format!(
                 r#"<?xml version="1.0"?>
@@ -655,12 +655,12 @@ impl From<SBPFVersion> for GdbStubArch {
 impl std::fmt::Display for GdbStubArch {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let gdbstub_arch = match self.0 {
-            SBPFVersion::V0 => "sbf",
-            SBPFVersion::V1 => "sbfv1",
-            SBPFVersion::V2 => "sbfv2",
-            SBPFVersion::V3 => "sbfv3",
-            SBPFVersion::V4 => "sbfv4",
-            SBPFVersion::Reserved => "sbfreserved",
+            SBPFVersion::V0 => "sbpf",
+            SBPFVersion::V1 => "sbpfv1",
+            SBPFVersion::V2 => "sbpfv2",
+            SBPFVersion::V3 => "sbpfv3",
+            SBPFVersion::V4 => "sbpfv4",
+            SBPFVersion::Reserved => "sbpfreserved",
         };
         write!(f, "{}", gdbstub_arch)
     }
