@@ -87,17 +87,17 @@ fn test_gdbstub_architecture() {
 
     const GDBSTUB_TEST_DEBUG_PORT: &'static str = "11212";
 
-    fn read_reply<R: BufRead>(reader: &mut R, buf: &mut Vec<u8>) -> std::io::Result<String> {
-        // Clear the destination buffer first.
-        buf.clear();
+    fn read_reply<R: BufRead>(reader: &mut R) -> std::io::Result<String> {
+        let mut buf = Vec::new();
+
         // Read till the # character.
-        reader.read_until(b'#', buf)?;
+        reader.read_until(b'#', &mut buf)?;
         // Then read exactly 2 bytes representing the checksum.
         let c = reader.read_u8()?;
         buf.write_u8(c)?;
         let c = reader.read_u8()?;
         buf.write_u8(c)?;
-        let reply = String::from_utf8_lossy(buf).to_string();
+        let reply = String::from_utf8_lossy(&buf).to_string();
         // eprintln!("gdbstub reply: {}", reply);
         Ok(reply)
     }
@@ -138,7 +138,6 @@ fn test_gdbstub_architecture() {
         // for instance, `solana-lldb` as a client.
         if std::env::var("DEBUG_GDBSTUB_ARCH").is_err() {
             let client_jh = s.spawn(|| -> std::io::Result<()> {
-                let mut buf = Vec::new();
                 let stub_addr =
                     SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), debug_port);
                 let mut retries = 20;
@@ -159,17 +158,17 @@ fn test_gdbstub_architecture() {
                 // Check the remote gdbstub's architecture is indeed `sbpfv0` i.e `sbpf`.
                 // https://github.com/anza-xyz/llvm-project/blob/cefd64747bb027d9755efa4d674ee4cf5772e7c2/lldb/source/Utility/ArchSpec.cpp#L252
                 writer.write_all(b"$qXfer:features:read:target.xml:0,fff#7d")?;
-                let reply = read_reply(&mut reader, &mut buf)?;
+                let reply = read_reply(&mut reader)?;
                 assert!(reply.contains("<architecture>sbpf</architecture>"));
 
                 // Check the icount_remain pseudo register is 10_000_000_000 (0x2540BE400).
                 writer.write_all(b"$pc#d3")?;
-                let reply = read_reply(&mut reader, &mut buf)?;
+                let reply = read_reply(&mut reader)?;
                 assert_eq!("+$00e40b540200*!#01", reply);
 
                 // Gracefully shutdown the remote gdbstub.
                 writer.write_all(b"$D#44")?;
-                let reply = read_reply(&mut reader, &mut buf)?;
+                let reply = read_reply(&mut reader)?;
                 assert_eq!("+$OK#9a", reply);
                 Ok(())
             });
