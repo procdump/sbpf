@@ -137,7 +137,7 @@ fn test_gdbstub_architecture() {
         // providing a simple test environment for playing with,
         // for instance, `solana-lldb` as a client.
         if std::env::var("DEBUG_GDBSTUB_ARCH").is_err() {
-            s.spawn(|| -> std::io::Result<()> {
+            let client_jh = s.spawn(|| -> std::io::Result<()> {
                 let mut buf = Vec::new();
                 let stub_addr =
                     SocketAddr::new(IpAddr::V4(Ipv4Addr::new(127, 0, 0, 1)), debug_port);
@@ -173,6 +173,8 @@ fn test_gdbstub_architecture() {
                 assert_eq!("+$OK#9a", reply);
                 Ok(())
             });
+
+            client_jh.join().unwrap().expect("client error");
         }
     });
 }
