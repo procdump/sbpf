@@ -563,29 +563,6 @@ mod bpf_arch {
     }
 }
 
-/// Copy all bytes of `data` to `buf`.
-/// Return the size of data copied.
-pub fn copy_to_buf(data: &[u8], buf: &mut [u8]) -> usize {
-    let len = buf.len().min(data.len());
-    buf[..len].copy_from_slice(&data[..len]);
-    len
-}
-
-/// Copy a range of `data` (start at `offset` with a size of `length`) to `buf`.
-/// Return the size of data copied. Returns 0 if `offset >= buf.len()`.
-///
-/// Mainly used by qXfer:_object_:read commands.
-pub fn copy_range_to_buf(data: &[u8], offset: u64, length: usize, buf: &mut [u8]) -> usize {
-    let offset = offset as usize;
-    if offset > data.len() {
-        return 0;
-    }
-
-    let start = offset;
-    let end = (offset + length).min(data.len());
-    copy_to_buf(&data[start..end], buf)
-}
-
 impl<'a, 'b, C: ContextObject>
     target::ext::target_description_xml_override::TargetDescriptionXmlOverride
     for Interpreter<'a, 'b, C>
@@ -635,12 +612,23 @@ impl<'a, 'b, C: ContextObject>
             _ => return Err(TargetError::NonFatal),
         };
 
-        Ok(copy_range_to_buf(
-            xml.trim().as_bytes(),
-            offset,
-            length,
-            buf,
-        ))
+        // Copy the range of `data` (start at `offset` with a size of `length`) to `buf`.
+        let data = xml.trim().as_bytes();
+        let offset = offset as usize;
+        if offset > data.len() {
+            // If `offset` is greater than the length of the underlying data
+            // then return zero.
+            return Ok(0);
+        }
+
+        let start = offset;
+        let end = (offset + length).min(data.len());
+        let data = &data[start..end];
+        let len = buf.len().min(data.len());
+        buf[..len].copy_from_slice(&data[..len]);
+
+        // Return the size of data copied.
+        Ok(len)
     }
 }
 
