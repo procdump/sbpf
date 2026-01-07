@@ -170,6 +170,7 @@ impl<'a, 'b, C: ContextObject> Target for Interpreter<'a, 'b, C> {
         Some(self)
     }
 
+    #[inline(always)]
     fn support_monitor_cmd(&mut self) -> Option<target::ext::monitor_cmd::MonitorCmdOps<'_, Self>> {
         Some(self)
     }
