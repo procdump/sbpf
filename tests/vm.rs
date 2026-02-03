@@ -86,6 +86,7 @@ fn test_gdbstub_architecture() {
     use std::time::Duration;
 
     const GDBSTUB_TEST_DEBUG_PORT: &'static str = "11212";
+    const METADATA: &'static str = "6CSmiViMaAguKgxNVwU8TWMPViQbtL5KKoFrDwWwtYNR";
 
     fn read_reply<R: BufRead>(reader: &mut R) -> std::io::Result<String> {
         let mut buf = Vec::new();
@@ -130,6 +131,7 @@ fn test_gdbstub_architecture() {
                 None
             );
             vm.context_object_pointer.remaining = 10_000_000_000;
+            vm.context_object_pointer.metadata = Some(METADATA.into());
             vm.debug_port = Some(debug_port);
             vm.execute_program(&executable, true).1.unwrap();
         });
@@ -165,6 +167,16 @@ fn test_gdbstub_architecture() {
                 writer.write_all(b"$pc#d3")?;
                 let reply = read_reply(&mut reader)?;
                 assert_eq!("+$00e40b540200*!#01", reply);
+
+                // Check the metadata pseudo register returns the
+                // expected METADATA value.
+                writer.write_all(b"$pd#d4")?;
+                let reply = read_reply(&mut reader)?;
+                assert_eq!(
+                    "+$3643536d6956694d614167754b67784e5677553854574d5056695162744c35\
+4b4b6f4672447757* 4594e520*~0*b#52",
+                    reply
+                );
 
                 // Gracefully shutdown the remote gdbstub.
                 writer.write_all(b"$D#44")?;

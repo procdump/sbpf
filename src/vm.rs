@@ -145,6 +145,10 @@ pub trait ContextObject {
     fn consume(&mut self, amount: u64);
     /// Get the number of remaining instructions allowed
     fn get_remaining(&self) -> u64;
+    /// Get runtime metadata
+    fn get_metadata(&self) -> Option<Vec<u8>> {
+        None
+    }
 }
 
 /// Statistic of taken branches (from a recorded trace)
