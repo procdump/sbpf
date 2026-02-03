@@ -256,15 +256,17 @@ impl<'a, 'b, C: ContextObject> target::ext::base::single_register_access::Single
             }
             BpfRegId::Metadata => {
                 // Get the metadata.
-                let mut metadata = self.vm.debug_metadata.clone().unwrap_or_default();
-
-                // Pad with zeroes so that we can treat this as a c-string unless
-                // it's exactly METADATA_PSEUDO_REGISTER_SIZE_BYTES where we won't
-                // which is also okay.
-                metadata.resize(METADATA_PSEUDO_REGISTER_SIZE_BYTES, 0);
-                // Return it to the caller.
-                buf[..METADATA_PSEUDO_REGISTER_SIZE_BYTES]
-                    .copy_from_slice(&metadata[..METADATA_PSEUDO_REGISTER_SIZE_BYTES])
+                let empty = Vec::default();
+                let metadata = self.vm.debug_metadata.as_ref().unwrap_or(&empty);
+                // Copy the metadata in the buffer.
+                // Pad with zeroes so that we can treat it later as a c-string.
+                let buf_len = buf.len();
+                let mut copy_len = buf_len.min(metadata.len());
+                if copy_len == buf_len {
+                    copy_len = copy_len.saturating_sub(1);
+                }
+                buf[..copy_len].copy_from_slice(&metadata[..copy_len]);
+                buf[copy_len..buf_len].fill(b'\0');
             }
         }
         Ok(buf.len())
