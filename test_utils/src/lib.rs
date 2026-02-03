@@ -25,8 +25,6 @@ pub mod syscalls;
 pub struct TestContextObject {
     /// Maximal amount of instructions which still can be executed
     pub remaining: u64,
-    /// Optional metadata associated with this context
-    pub metadata: Option<Vec<u8>>,
 }
 
 impl ContextObject for TestContextObject {
@@ -37,19 +35,12 @@ impl ContextObject for TestContextObject {
     fn get_remaining(&self) -> u64 {
         self.remaining
     }
-
-    fn get_metadata(&self) -> Option<Vec<u8>> {
-        self.metadata.clone()
-    }
 }
 
 impl TestContextObject {
     /// Initialize with instruction meter
     pub fn new(remaining: u64) -> Self {
-        Self {
-            remaining,
-            ..Default::default()
-        }
+        Self { remaining }
     }
 }
 

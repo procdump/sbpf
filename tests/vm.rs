@@ -131,8 +131,8 @@ fn test_gdbstub_architecture() {
                 None
             );
             vm.context_object_pointer.remaining = 10_000_000_000;
-            vm.context_object_pointer.metadata = Some(METADATA.into());
             vm.debug_port = Some(debug_port);
+            vm.debug_metadata = Some(METADATA.into());
             vm.execute_program(&executable, true).1.unwrap();
         });
         // If this is set leave the stub port listening hence

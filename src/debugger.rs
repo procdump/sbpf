@@ -256,11 +256,7 @@ impl<'a, 'b, C: ContextObject> target::ext::base::single_register_access::Single
             }
             BpfRegId::Metadata => {
                 // Get the metadata.
-                let mut metadata = self
-                    .vm
-                    .context_object_pointer
-                    .get_metadata()
-                    .unwrap_or_default();
+                let mut metadata = self.vm.debug_metadata.clone().unwrap_or_default();
 
                 // Pad with zeroes so that we can treat this as a c-string unless
                 // it's exactly METADATA_PSEUDO_REGISTER_SIZE_BYTES where we won't

@@ -145,10 +145,6 @@ pub trait ContextObject {
     fn consume(&mut self, amount: u64);
     /// Get the number of remaining instructions allowed
     fn get_remaining(&self) -> u64;
-    /// Get runtime metadata
-    fn get_metadata(&self) -> Option<Vec<u8>> {
-        None
-    }
 }
 
 /// Statistic of taken branches (from a recorded trace)
@@ -310,6 +306,9 @@ pub struct EbpfVm<'a, C: ContextObject> {
     /// TCP port for the debugger interface
     #[cfg(feature = "debugger")]
     pub debug_port: Option<u16>,
+    /// Debug metadata passed
+    #[cfg(feature = "debugger")]
+    pub debug_metadata: Option<Vec<u8>>,
 }
 
 impl<'a, C: ContextObject> EbpfVm<'a, C> {
@@ -349,6 +348,8 @@ impl<'a, C: ContextObject> EbpfVm<'a, C> {
             debug_port: std::env::var("VM_DEBUG_PORT")
                 .ok()
                 .and_then(|v| v.parse::<u16>().ok()),
+            #[cfg(feature = "debugger")]
+            debug_metadata: None,
             register_trace: Vec::default(),
         }
     }
