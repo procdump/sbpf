@@ -254,6 +254,20 @@ impl<'a, 'b, C: ContextObject> target::ext::base::single_register_access::Single
             BpfRegId::InstructionCountRemaining => {
                 buf.copy_from_slice(&self.vm.context_object_pointer.get_remaining().to_le_bytes())
             }
+            BpfRegId::Metadata => {
+                // Get the metadata.
+                let empty = Vec::default();
+                let metadata = self.vm.debug_metadata.as_ref().unwrap_or(&empty);
+                // Copy the metadata in the buffer.
+                // Pad with zeroes so that we can treat it later as a c-string.
+                let buf_len = buf.len();
+                let mut copy_len = buf_len.min(metadata.len());
+                if copy_len == buf_len {
+                    copy_len = copy_len.saturating_sub(1);
+                }
+                buf[..copy_len].copy_from_slice(&metadata[..copy_len]);
+                buf[copy_len..buf_len].fill(b'\0');
+            }
         }
         Ok(buf.len())
     }
@@ -269,6 +283,7 @@ impl<'a, 'b, C: ContextObject> target::ext::base::single_register_access::Single
             BpfRegId::Sp => self.reg[ebpf::FRAME_PTR_REG] = r,
             BpfRegId::Pc => self.reg[11] = r,
             BpfRegId::InstructionCountRemaining => (),
+            BpfRegId::Metadata => (),
         }
         Ok(())
     }
@@ -381,6 +396,7 @@ impl<'a, 'b, C: ContextObject> target::ext::lldb_register_info_override::LldbReg
                     BpfRegId::Sp => "sp",
                     BpfRegId::Pc => "pc",
                     BpfRegId::InstructionCountRemaining => "remaining",
+                    BpfRegId::Metadata => "metadata",
                 }
                 .into();
                 let set = String::from("General Purpose Registers");
@@ -531,6 +547,8 @@ mod bpf_arch {
 
             use gdbstub::arch::RegId;
 
+            use crate::debugger::METADATA_PSEUDO_REGISTER_SIZE_BYTES;
+
             /// BPF register identifier.
             #[derive(Debug, Clone, Copy)]
             #[non_exhaustive]
@@ -543,6 +561,8 @@ mod bpf_arch {
                 Pc,
                 /// Instruction Counter (pseudo register)
                 InstructionCountRemaining,
+                /// Metadata (pseudo register)
+                Metadata,
             }
 
             impl RegId for BpfRegId {
@@ -554,6 +574,12 @@ mod bpf_arch {
                         10 => BpfRegId::Sp,
                         11 => BpfRegId::Pc,
                         12 => BpfRegId::InstructionCountRemaining,
+                        13 => {
+                            return Some((
+                                BpfRegId::Metadata,
+                                Some(NonZeroUsize::new(METADATA_PSEUDO_REGISTER_SIZE_BYTES))?,
+                            ))
+                        }
                         _ => return None,
                     };
                     Some((reg, Some(NonZeroUsize::new(8)?)))
@@ -576,6 +602,7 @@ impl<'a, 'b, C: ContextObject>
     ) -> TargetResult<usize, Self> {
         let gdbstub_arch: GdbStubArch = self.executable.get_sbpf_version().into();
         let feature_name = "org.gnu.gdb.sbpf.core";
+        let metadata_pseudo_register_size_bits = METADATA_PSEUDO_REGISTER_SIZE_BYTES * 8;
         let xml = match annex {
             b"target.xml" => format!(
                 r#"<?xml version="1.0"?>
@@ -584,6 +611,8 @@ impl<'a, 'b, C: ContextObject>
   <architecture>{gdbstub_arch}</architecture>
 
   <feature name="{feature_name}">
+
+    <vector id="vmetadata" type="uint8" count="{METADATA_PSEUDO_REGISTER_SIZE_BYTES}"/>
 
     <!-- General Purpose Registers R0–R9 -->
     <reg name="r0" bitsize="64" regnum="0" dwarf_regnum="0" type="uint64" encoding="uint" format="hex"/>
@@ -605,6 +634,9 @@ impl<'a, 'b, C: ContextObject>
 
     <!-- Instruction Counter R12 -->
     <reg name="icount_remain" bitsize="64" regnum="12" type="uint64" encoding="uint" format="decimal"/>
+
+    <!-- Metadata R13 -->
+    <reg name="metadata" bitsize="{metadata_pseudo_register_size_bits}" regnum="13" type="vmetadata" group="metadata" save-restore="no"/>
 
   </feature>
 </target>"#
@@ -653,3 +685,6 @@ impl std::fmt::Display for GdbStubArch {
         write!(f, "{}", gdbstub_arch)
     }
 }
+
+/// Maximum bytes the metadata pseudo register could hold.
+pub const METADATA_PSEUDO_REGISTER_SIZE_BYTES: usize = 128;
