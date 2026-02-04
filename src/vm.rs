@@ -308,7 +308,7 @@ pub struct EbpfVm<'a, C: ContextObject> {
     pub debug_port: Option<u16>,
     /// Debug metadata passed
     #[cfg(feature = "debugger")]
-    pub debug_metadata: Option<Vec<u8>>,
+    pub debug_metadata: Option<String>,
 }
 
 impl<'a, C: ContextObject> EbpfVm<'a, C> {

@@ -46,7 +46,7 @@ fn wait_for_tcp(port: u16) -> DynResult<TcpStream> {
 /// Connect to the debugger and hand over the control of the interpreter
 pub fn execute<C: ContextObject>(interpreter: &mut Interpreter<C>, port: u16) {
     if let Some(metadata) = &interpreter.vm.debug_metadata {
-        eprintln!("Debugging executable with metadata: {:?}", *metadata);
+        eprintln!("Debugging executable with metadata ({})", metadata);
     }
 
     let connection: Box<dyn ConnectionExt<Error = std::io::Error>> =
@@ -671,13 +671,7 @@ impl<'a, 'b, C: ContextObject> MonitorCmd for Interpreter<'a, 'b, C> {
     ) -> Result<(), Self::Error> {
         match cmd {
             b"metadata" => match &self.vm.debug_metadata {
-                Some(metadata) => {
-                    if let Ok(metadata) = str::from_utf8(metadata) {
-                        outputln!(out, "{}", metadata);
-                    } else {
-                        out.write_raw(metadata.as_slice())
-                    }
-                }
+                Some(metadata) => outputln!(out, "{}", metadata),
                 None => outputln!(out, "no metadata present"),
             },
             _ => {
