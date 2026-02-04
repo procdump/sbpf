@@ -9,8 +9,8 @@ use gdbstub::stub::{state_machine, GdbStub, SingleThreadStopReason};
 use gdbstub::arch::lldb::{Encoding, Format, Generic, Register};
 use gdbstub::arch::RegId;
 
-use gdbstub::target;
 use gdbstub::target::{ext::monitor_cmd::MonitorCmd, Target, TargetError, TargetResult};
+use gdbstub::{outputln, target};
 
 use core::convert::TryInto;
 
@@ -45,16 +45,8 @@ fn wait_for_tcp(port: u16) -> DynResult<TcpStream> {
 
 /// Connect to the debugger and hand over the control of the interpreter
 pub fn execute<C: ContextObject>(interpreter: &mut Interpreter<C>, port: u16) {
-    if let Some(h) = interpreter.executable.get_pre_load_sha256() {
-        let hash = hex::encode(h);
-        eprintln!("Debugging executable with (pre-load) SHA256: {}", hash);
-
-        // Check if user asks to save the hash in a file
-        if let Ok(ref info_file) = std::env::var("VM_DEBUG_EXEC_INFO_FILE") {
-            if std::fs::write(info_file, hash).is_err() {
-                eprintln!("Cannot write VM executable information in {}", info_file);
-            }
-        }
+    if let Some(metadata) = &interpreter.vm.debug_metadata {
+        eprintln!("Debugging executable with metadata: {:?}", *metadata);
     }
 
     let connection: Box<dyn ConnectionExt<Error = std::io::Error>> =
@@ -678,12 +670,18 @@ impl<'a, 'b, C: ContextObject> MonitorCmd for Interpreter<'a, 'b, C> {
         mut out: target::ext::monitor_cmd::ConsoleOutput<'_>,
     ) -> Result<(), Self::Error> {
         match cmd {
-            b"executable_pre_load_sha256" => match self.executable.get_pre_load_sha256() {
-                Some(h) => out.write_raw(hex::encode(h).as_bytes()),
-                None => out.write_raw(b"no pre-load bytes"),
+            b"metadata" => match &self.vm.debug_metadata {
+                Some(metadata) => {
+                    if let Ok(metadata) = str::from_utf8(metadata) {
+                        outputln!(out, "{}", metadata);
+                    } else {
+                        out.write_raw(metadata.as_slice())
+                    }
+                }
+                None => outputln!(out, "no metadata present"),
             },
             _ => {
-                out.write_raw(b"unknown monitor cmd");
+                outputln!(out, "unknown monitor command");
             }
         }
         Ok(())
