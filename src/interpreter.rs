@@ -188,7 +188,9 @@ impl<'a, 'b, C: ContextObject> Interpreter<'a, 'b, C> {
         let src = insn.src as usize;
 
         if config.enable_register_tracing {
+            self.reg[11] |= (self.vm.previous_instruction_meter - self.vm.due_insn_count) << 32;
             self.vm.register_trace.push(self.reg);
+            self.reg[11] &= 0xffffffff;
         }
 
         match insn.opc {
